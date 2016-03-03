@@ -1,6 +1,7 @@
 """
 #Classic Vanilla RNN
 Adaptation of https://github.com/dennybritz/rnn-tutorial-rnnlm/blob/master/rnn_theano.py
+and https://github.com/gwtaylor/theano-rnn/blob/master/rnn.py
 """
 
 import numpy as np
