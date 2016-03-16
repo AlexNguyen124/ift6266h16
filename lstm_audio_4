@@ -1,0 +1,76 @@
+import numpy as np
+import theano
+import theano.tensor as T
+from lasagne.layers import *
+from lasagne.init import Constant, GlorotUniform
+
+
+import matplotlib.pyplot as plt
+
+#Lasagne Seed for Reproducibility
+lasagne.random.set_rng(np.random.RandomState(1))
+
+X_train         = np.load("train_track.npy")
+X_valid         = np.load("valid_track.npy")
+X_test          = np.load("test_track.npy")
+
+BATCH_SIZE      = 8                                     # Bacth size
+seq_len         = int(X_train.shape[1])                 # Number of sequence per example
+num_inputs      = 16000                                 # Number of inputs per sequence
+num_units       = 100                                   # Number of units in the two hidden (LSTM) layers
+LEARNING_RATE   = .001                                  # Optimization learning rate
+GRAD_CLIP       = 100                                   # All gradients above this will be clipped
+EPOCHS          = 20                                    # Number of epochs to train the net
+forget_gate     = Gate(b=lasagne.init.Constant(5.0))    # initialize the constant of the forget gate
+ 
+
+#The network model:
+# Recurrent layers expect input of shape (batch size, SEQ_LENGTH, num_inputs)
+l_inp           = InputLayer(none, none, num_inputs)
+batchsize, seqlen, _ = l_inp.input_var.shape
+l_lstm_1        = LSTMLayer(l_inp,    num_units=num_units)#, grad_clipping=GRAD_CLIP, forgetgate=forget_gate)
+l_lstm_2        = LSTMLayer(l_lstm_1, num_units=num_units)#, grad_clipping=GRAD_CLIP, forgetgate=forget_gate)
+l_shp           = ReshapeLayer(l_lstm_2, (-1, num_units))
+l_dense         = DenseLayer(l_shp, num_units=1, nonlinearity=lasagne.nonlinearities.linear)
+l_out           = ReshapeLayer(l_dense, (batchsize, seqlen, 1))
+
+# create output out of input in order to save memory?
+X               = T.tensor3('X')
+Y               = T.tensor3('Y')
+network_output  = get_output(l_out, X)
+cost            = lasagne.objectives.squared_error(network_output, Y).mean() #lagging X and Leading Network_output
+all_params      = get_all_params(l_out,trainable=True)
+updates         = lasagne.updates.adam(cost, all_params, LEARNING_RATE)
+
+# Theano functions for training and computing cost
+print "Compiling functions ..."
+train           = theano.function([l_in.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
+#compute_cost    = theano.function([l_in.input_var, target_values], cost, allow_input_downcast=True)
+#probs           = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
+    
+X_train= np.arange(8*5*4).reshape(8,5,4)
+
+for epoch in range(EPOCHS):
+    train_cost = []
+    valid_cost = []
+    batchnumber = 0    
+    while batchnumber < int(X_train.shape[0]/BATCH_SIZE):
+        batchbeg, batchend = batchnumber*BATCH_SIZE, (batchnumber+1)*BATCH_SIZE
+        x, y = X_train[batchbeg:batchend, 0:seq_len-1 ,:], X_train[batchbeg : batchend,1::,:]
+        train_cost.append(train(x, y))
+        batchnumber +=1
+    print "Epoch:", epoch, np.mean(train_cost)
+
+for epoch in range(0, EPOCHS):
+    b = 0
+    train_cost = []
+    while True:
+        if b*BATCH_SIZE >= X_train.shape[0]:
+            break
+        X_batch = X_train[b*BATCH_SIZE : (b+1)*BATCH_SIZE]
+        train_cost.append( train(X_batch) )
+        b += 1
+    print "train loss this epoch:", epoch, np.mean(train_cost)
+    
+
+train = theano.function([l_inp.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
