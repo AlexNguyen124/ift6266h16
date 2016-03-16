@@ -1,0 +1,66 @@
+import numpy as np
+import theano
+import theano.tensor as T
+import lasagne
+from lasagne.init import Constant, GlorotUniform
+
+
+import matplotlib.pyplot as plt
+
+#Lasagne Seed for Reproducibility
+lasagne.random.set_rng(np.random.RandomState(1))
+
+X_train         = np.load("train_track.npy")
+X_valid         = np.load("valid_track.npy")
+X_test          = np.load("test_track.npy")
+
+SEQ_LENGTH      = X_train.shape[1]    # Sequence Length
+N_HIDDEN        = 100   # Number of units in the two hidden (LSTM) layers
+LEARNING_RATE   = .001   # Optimization learning rate
+GRAD_CLIP       = 100   # All gradients above this will be clipped
+EPOCHS          = 500    # Number of epochs to train the net
+BATCH_SIZE      = 8    # Batch Size
+num_inputs      = 16000 #Number of inputs per sequence
+
+
+#def main(num_epochs=NUM_EPOCHS):
+    #print "Building network ..." 
+    # First, we build the network, starting with an input layer
+    # Recurrent layers expect input of shape
+    # (batch size, SEQ_LENGTH, num_inputs)
+    
+    #The network model
+    
+l_in            = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, num_inputs))
+#forget_gate     = lasagne.layers.Gate(b=lasagne.init.Constant(5.0))
+l_forward_1     = lasagne.layers.LSTMLayer(l_in,        N_HIDDEN, grad_clipping=GRAD_CLIP,nonlinearity=lasagne.nonlinearities.tanh)#, forgetgate=forget_gate)
+l_forward_2     = lasagne.layers.LSTMLayer(l_forward_1, N_HIDDEN, grad_clipping=GRAD_CLIP,nonlinearity=lasagne.nonlinearities.tanh)#, forgetgate=forget_gate)
+l_shp           = lasagne.layers.ReshapeLayer(l_forward_2, (-1, N_HIDDEN))
+l_dense         = lasagne.layers.DenseLayer(l_shp, num_units=1, nonlinearity=lasagne.nonlinearities.linear)
+l_out           = lasagne.layers.ReshapeLayer(l_dense, (-1, SEQ_LENGTH, 1))
+
+# create output out of input in order to save memory?
+X               = T.tensor3('X')
+network_output  = lasagne.layers.get_output(l_out, X)
+cost            = lasagne.objectives.squared_error(network_output[:,0:SEQ_LENGTH-1,:], X[:,1::,:]).mean() #lagging X and Leading Network_output
+all_params      = lasagne.layers.get_all_params(l_out,trainable=True)
+updates         = lasagne.updates.adam(cost, all_params, LEARNING_RATE)
+
+# Theano functions for training and computing cost
+print "Compiling functions ..."
+train           = theano.function([X], cost, updates=updates)
+#compute_cost    = theano.function([l_in.input_var], cost)
+#probs           = theano.function([l_in.input_var], network_output)
+    
+
+for epoch in range(0, EPOCHS):
+    b = 0
+    train_cost = []
+    while True:
+        if b*BATCH_SIZE >= X_train.shape[0]:
+            break
+        X_batch = X_train[b*BATCH_SIZE : (b+1)*BATCH_SIZE]
+        train_cost.append( train(X_batch) )
+        b += 1
+    print "train loss this epoch:", epoch, np.mean(train_cost)
+
