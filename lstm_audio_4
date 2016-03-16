@@ -61,16 +61,3 @@ for epoch in range(EPOCHS):
         batchnumber +=1
     print "Epoch:", epoch, np.mean(train_cost)
 
-for epoch in range(0, EPOCHS):
-    b = 0
-    train_cost = []
-    while True:
-        if b*BATCH_SIZE >= X_train.shape[0]:
-            break
-        X_batch = X_train[b*BATCH_SIZE : (b+1)*BATCH_SIZE]
-        train_cost.append( train(X_batch) )
-        b += 1
-    print "train loss this epoch:", epoch, np.mean(train_cost)
-    
-
-train = theano.function([l_inp.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
