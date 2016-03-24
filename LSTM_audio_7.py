@@ -100,7 +100,7 @@ def generate(X_test, model, l_out, out_fn, length):
     for x in range(0, length):
         next_input = out_fn(prev_input)
         generated_seq.append(next_input.flatten()[0:num_inputs])
-        #do like melvin. : prev_input = prev_input[:-8000] next_input[:8000]
+        #do like melvin. : prev_input = prev_input[:-8000] next_input[-8000:]
         prev_input = next_input
     return generated_seq
 
