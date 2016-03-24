@@ -35,9 +35,9 @@ print "...building model"
 X           = T.tensor3('X')
 
 l_input     = InputLayer((None, seq_len, num_inputs))
-l_lstm1     = LSTMLayer(l_input, num_units, nonlinearity=tanh)#, forgetgate=forget_gate)
-l_lstm2     = LSTMLayer(l_lstm1, num_units, nonlinearity=tanh)#, forgetgate=forget_gate)
-l_lstm3     = LSTMLayer(l_lstm2, num_units, nonlinearity=tanh)#, forgetgate=forget_gate)
+l_lstm1     = LSTMLayer(l_input, num_units, nonlinearity=tanh, forgetgate=forget_gate)
+l_lstm2     = LSTMLayer(l_lstm1, num_units, nonlinearity=tanh, forgetgate=forget_gate)
+l_lstm3     = LSTMLayer(l_lstm2, num_units, nonlinearity=tanh, forgetgate=forget_gate)
 l_shp       = ReshapeLayer(l_lstm3, (-1, num_units))
 l_dense     = DenseLayer(l_shp, num_units=num_inputs, nonlinearity=tanh)
 l_out       = ReshapeLayer(l_dense, (-1, seq_len, num_inputs))
