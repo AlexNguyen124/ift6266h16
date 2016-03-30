@@ -28,7 +28,7 @@ length          = 60
 forget_gate     = Gate(b=Constant(1.0))    # initialize the constant of the forget gate
 amp             = 10000.
 
-trial = str(examples)+str(seq_len)+str(num_inputs)+str(num_units)+"6L"
+trial = str(examples)+str(seq_len)+str(num_inputs)+str(num_units)+"4L"
 
 print "N=           ", examples
 print "seq_len:     ", seq_len
@@ -43,9 +43,7 @@ l_lstm1     = LSTMLayer(l_input, num_units, nonlinearity=tanh, forgetgate=forget
 l_lstm2     = LSTMLayer(l_lstm1, num_units, nonlinearity=tanh, forgetgate=forget_gate)
 l_lstm3     = LSTMLayer(l_lstm2, num_units, nonlinearity=tanh, forgetgate=forget_gate)
 l_lstm4     = LSTMLayer(l_lstm3, num_units, nonlinearity=tanh, forgetgate=forget_gate)
-l_lstm5     = LSTMLayer(l_lstm4, num_units, nonlinearity=tanh, forgetgate=forget_gate)
-l_lstm6     = LSTMLayer(l_lstm5, num_units, nonlinearity=tanh, forgetgate=forget_gate)
-l_shp       = ReshapeLayer(l_lstm6, (-1, num_units))
+l_shp       = ReshapeLayer(l_lstm4, (-1, num_units))
 l_dense     = DenseLayer(l_shp, num_units=num_inputs, nonlinearity=tanh)
 l_out       = ReshapeLayer(l_dense, (-1, seq_len, num_inputs))
 net_out     = get_output(l_out, X)
@@ -62,6 +60,15 @@ grads       = T.grad(loss, params)
 updates     = adam(grads, params, learn_rate)
 train_fn    = theano.function([X], loss, updates=updates)
 val_fn      = theano.function([X], loss)
+
+print "lstm1", count_params(l_lstm1)
+print "lstm2", count_params(l_lstm2)
+print "lstm3", count_params(l_lstm3)
+print "lstm4", count_params(l_lstm4)
+print "shp", count_params(l_shp)
+print "Dense", count_params(l_dense)
+print "l_out", count_params(l_out)
+print "Total", count_params(l_lstm1)+count_params(l_lstm2)+count_params(l_lstm3)+count_params(l_lstm4)+count_params(l_dense)
 
 print "...training model"
 TRAINLOSS   = []
