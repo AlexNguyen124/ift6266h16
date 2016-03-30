@@ -55,8 +55,6 @@ valid_track        -= train_track_mean
 test_track         -= train_track_mean
 #test_track         /= train_track_std + 0.1 * meanstd
 
-
-
 #Chopping track in "secs" seconds intervals
 # and making input matrix for lasagne lstm
 # by reshaping with proper dimensions
