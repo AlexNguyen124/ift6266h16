@@ -30,7 +30,6 @@ amp             = 10000.
 
 trial = str(examples)+str(seq_len)+str(num_inputs)+str(num_units)+"6L"
 
-
 print "N=           ", examples
 print "seq_len:     ", seq_len
 print "num_inputs:  ", num_inputs
