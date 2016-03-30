@@ -43,7 +43,6 @@ l_dense     = DenseLayer(l_shp, num_units=num_inputs, nonlinearity=tanh)
 l_out       = ReshapeLayer(l_dense, (-1, seq_len, num_inputs))
 net_out     = get_output(l_out, X)
     
-    
 Y           = net_out[:, 0: seq_len - 1, :]
 target      = X[:, 1:, :]
 loss        = T.mean((Y - target)**2)
